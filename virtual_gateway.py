@@ -1,29 +1,13 @@
-#!/usr/bin/env python
-# coding: utf-8
+import random
 
-# In[3]:
-
-
-import csv
-from simulate_sensor import simulate_sensor
-
-def start_virtual_gateway(filename="sensor_data.csv", samples=500):
-    with open(filename, "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(["Wind Speed", "Theoretical Power", "Wind Direction"])
-
-        for _ in range(samples):
-            data = simulate_sensor()
-            writer.writerow([data["Wind Speed"], data["Theoretical Power"], data["Wind Direction"]])
-    
-    print("Virtual IoT Gateway Completed. Data stored in sensor_data.csv")
-
-if __name__ == "__main__":
-    start_virtual_gateway()
-
-
-# In[ ]:
-
-
+def get_sensor_data():
+    wind_speed = round(random.uniform(3, 15), 2)
+    theoretical_power = round(wind_speed * 200, 2)
+    wind_direction = round(random.uniform(0, 360), 2)
+    return {
+        "Wind Speed": wind_speed,
+        "Theoretical Power": theoretical_power,
+        "Wind Direction": wind_direction
+    }
 
 
