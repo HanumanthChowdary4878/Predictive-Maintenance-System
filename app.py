@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 import joblib
 import os
-import time
 
 @st.cache_resource
 def load_model():
@@ -15,6 +14,9 @@ model, metadata = load_model()
 
 st.set_page_config(page_title="Wind Turbine Power Prediction", layout="wide")
 st.title("Wind Turbine Power Prediction Dashboard")
+
+if "simulated_data" not in st.session_state:
+    st.session_state.simulated_data = None
 
 st.subheader("Upload Dataset (Optional)")
 uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
@@ -34,39 +36,44 @@ wind_direction = col3.number_input("Wind Direction (°)", 0, 360, 150)
 generate_btn = st.button("Simulate Sensor Data")
 
 if generate_btn:
-    simulated_data = {
+    st.session_state.simulated_data = {
         "Wind Speed": wind_speed,
         "Theoretical Power": theoretical_power,
         "Wind Direction": wind_direction
     }
     st.write("Sensor Data")
-    st.json(simulated_data)
+    st.json(st.session_state.simulated_data)
 
 st.subheader("Virtual IoT Gateway")
 
 gateway_btn = st.button("Send Data to Virtual Gateway")
 
 if gateway_btn:
-    os.makedirs("gateway_data", exist_ok=True)
-    df_gateway = pd.DataFrame([simulated_data])
-    df_gateway.to_csv("gateway_data/latest_sensor.csv", index=False)
-    st.write("Data sent to virtual gateway")
-    st.dataframe(df_gateway)
+    if st.session_state.simulated_data is None:
+        st.error("Simulate sensor data first")
+    else:
+        os.makedirs("gateway_data", exist_ok=True)
+        df_gateway = pd.DataFrame([st.session_state.simulated_data])
+        df_gateway.to_csv("gateway_data/latest_sensor.csv", index=False)
+        st.write("Data sent to virtual gateway")
+        st.dataframe(df_gateway)
 
 st.subheader("Model Prediction")
 
 predict_btn = st.button("Predict Power Output")
 
 if predict_btn:
-    arr = np.array([
-        simulated_data["Wind Speed"],
-        simulated_data["Theoretical Power"],
-        simulated_data["Wind Direction"]
-    ]).reshape(1, -1)
-
-    prediction = model.predict(arr)[0]
-
-    st.write(f"Predicted Active Power: {prediction:.2f} kW")
+    if st.session_state.simulated_data is None:
+        st.error("Simulate sensor data first")
+    else:
+        d = st.session_state.simulated_data
+        arr = np.array([
+            d["Wind Speed"],
+            d["Theoretical Power"],
+            d["Wind Direction"]
+        ]).reshape(1, -1)
+        prediction = model.predict(arr)[0]
+        st.write(f"Predicted Active Power: {prediction:.2f} kW")
 
 st.subheader("Model Metadata")
 st.json(metadata)
